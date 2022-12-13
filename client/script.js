@@ -81,12 +81,17 @@ function saveTask() {
 }
 
 function renderList() {
-  console.log('rendering');
-  api.getAll().then((tasks) => {
+  api.getAll().then(tasks => {
     todoListElement.innerHTML = '';
+    tasks.sort(function(b,a){
+      return new Date(b.dueDate) - new Date(a.dueDate);
+    });
     if (tasks && tasks.length > 0) {
-      tasks.forEach((task) => {
+      tasks.forEach(task => {
         todoListElement.insertAdjacentHTML('beforeend', renderTask(task));
+        document.getElementById("taskCompleted" + task.id)
+          .addEventListener("click", () => completedClicked(task));
+        checkCompleted(task);
       });
     }
   });
@@ -96,7 +101,10 @@ function renderTask({ id, title, description, dueDate }) {
   let html = `
     <li class="select-none mt-2 py-2 border-b border-amber-300">
       <div class="flex items-center">
-        <h3 class="mb-3 flex-1 text-xl font-bold text-pink-800 uppercase">${title}</h3>
+        <div>
+          <input type="checkbox" class="mr-5" id="taskCompleted${id}" name="taskCompleted${id}">
+        </div>
+        <h3 id="titel${id}" class="flex-1 text-xl font-bold text-pink-800 uppercase">${title}</h3>
         <div>
           <span>${dueDate}</span>
           <button onclick="deleteTask(${id})" class="inline-block bg-amber-500 text-xs text-amber-900 border border-white px-3 py-1 rounded-md ml-2">Ta bort</button>
@@ -112,10 +120,27 @@ function renderTask({ id, title, description, dueDate }) {
   return html;
 }
 
+function completedClicked(task) {
+  task.completed = !task.completed;
+  checkCompleted(task);
+  api.completedClicked(task);
+}
+
 function deleteTask(id) {
   api.remove(id).then((result) => {
     renderList();
   });
+}
+
+function checkCompleted(task) {
+  var el = document.getElementById("titel" + task.id);
+  if (task.completed)
+    el.classList.add("line-through", "lt-width");
+  else
+    el.classList.remove("line-through", "lt-width");
+
+  var box = document.getElementById("taskCompleted" + task.id);
+  box.checked = task.completed;
 }
 
 renderList();

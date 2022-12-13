@@ -73,4 +73,13 @@ class Api {
       .then((result) => result)
       .catch((err) => console.log(err));
   }
+
+  completedClicked(task) {
+    console.log(`Marking task with id ${task.id} as completed = ${task.completed}`);
+
+    return fetch(`${this.url}/${task.id}`, {
+      method: 'PATCH'
+    }).then(result => result)
+    .catch(err => console.log(err));
+  }
 }
