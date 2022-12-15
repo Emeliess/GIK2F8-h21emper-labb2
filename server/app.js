@@ -3,6 +3,8 @@ const express = require("express");
 /* Skapar upp ett express-objekt, som i stort representerar en webbserver */
 const app = express();
 
+const validate = require("validate.js");
+
 /* Importerar den inbyggda modulen fs */
 const fs = require("fs/promises");
 
@@ -21,6 +23,31 @@ app
     /* För att göra så att servern ska kunna behandla förfrågan vidare, använder man funktionen next() som kommer som tredje parameter till denna callbackfunktion.  */
     next();
   });
+
+const constraints = {
+  title: {
+    presence: true,
+    length: {
+      minimum: 2,
+      maximum: 100,
+      message: "Titeln måste vara mellan 3 och 100 tecken"
+    }
+  },
+  description: {
+    presence: false,
+    length: {
+      maximum: 500,
+      message: "Beskrivning får ej vara längre än 500 tecken"
+    }
+  },
+  dueDate: {
+    presence: true,
+    length: {
+      minimum: 1,
+      message: "Utfört senast datum måste finnas"
+    }
+  }
+}
 
 /* Express (som finns i variabeln app) har metoder för att specificera vad som ska hända vid olika HTTP-metoder. Man anropar metoden get() hos expressobjektet för att fånga upp förfrågningar med metoden GET - alltså en GET-förfrågan -  från en klient.  */
 
@@ -47,6 +74,13 @@ app.post("/tasks", async (req, res) => {
   try {
     /* Alla data från klienten finns i req-objektet. I req.body finns alla data, alltså själva innehållet i förfrågan. I detta fall den uppgift som ska sparas ned. */
     const task = req.body;
+    let validationErrors = validate(task, constraints, { fullMessages: false });
+    console.log(validationErrors);
+
+    if (validationErrors) {
+      return res.status(400).send(validationErrors);
+    }
+
     /* Det befintliga innehållet i filen läses in och sparas till variabeln listBuffer. */
     const listBuffer = await fs.readFile("./tasks.json");
     /* Innehållet i filen är de uppgifter som hittills är sparade. För att kunna behandla listan av uppgifter i filen som JavaScript-objekt behövs JSON.parse. Parse används för att översätta en buffer eller text till JavaScript */
